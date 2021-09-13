@@ -25,6 +25,7 @@
         |Large| 10ft by 10ft|
         |Huge| 15ft by 15ft|
         |Gargantuan| 20ft by 20ft|
+        
         _**NOTE:** Each square/cell is **5ft by 5ft**. Sizes of enemies will automatically be computed based on the size of the battlemap and each cell._
     * Click _Spawn Enemy_ (Enemies are shown by a red dot)
 * **Check radius for AOE spells/attacks**
