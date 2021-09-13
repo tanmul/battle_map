@@ -1,9 +1,9 @@
-#D&D Battle Map
-####Created by Tanmay M.
+# D&D Battle Map
+#### Created by Tanmay M.
 
-##How to Use
+## How to Use
 
-###Initial Setup
+### Initial Setup
 * **Add Hero/Playable Character (PC)**
 
     * Choose Character from dropdown menu
