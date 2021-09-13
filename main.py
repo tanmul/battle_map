@@ -6,10 +6,11 @@ from PIL import ImageTk, Image, ImageDraw
 import random
 import math
 
-WIDTH, HEIGHT = 1920, 1080
+WIDTH, HEIGHT = 1260, 720
+BLOCK_SIZE = 30
 canvas_WIDTH, canvas_HEIGHT = (int)(WIDTH/1.215), HEIGHT
 canvas_center = [canvas_WIDTH/2, canvas_HEIGHT/2]
-HERO_WIDTH, HERO_HEIGHT = 45, 55
+HERO_WIDTH, HERO_HEIGHT = BLOCK_SIZE, BLOCK_SIZE+10
 SIZES = {'Tiny': 0.5, 'Small': 1, 'Medium': 1, 'Large': 2, 'Huge': 3, 'Gargantuan': 4}
 
 ids = []
@@ -29,8 +30,8 @@ double_click_flag = False
 class Spawner(Frame):
     def __init__(self, master, canvas):
         super().__init__(master)
-        frame_width, frame_height = (WIDTH-canvas_WIDTH), HEIGHT/2
-        self.config( bg ='white', width=(WIDTH-canvas_WIDTH), height=HEIGHT/2)
+        frame_width, frame_height = (WIDTH-canvas_WIDTH), HEIGHT/3
+        self.config( bg ='white', width=frame_width, height=frame_height)
         self.pack_propagate(False)
         self.grid_propagate(False)
         self.columnconfigure((0,1), weight=1)
@@ -55,12 +56,12 @@ class Spawner(Frame):
 
         width_var = StringVar(self)
         height_var = StringVar(self)
-        self.width_label = Label(self, text='Enter the spell width/radius (ft)')
-        self.width_label.grid(row=2, column=0, sticky='EW')
+        self.width_label = Label(self, text='Spell width/radius (ft)')
+        self.width_label.grid(row=2, column=0, sticky='EW',ipadx = 5)
         self.entry_width = Entry(self, textvariable=width_var)
         self.entry_width.grid(row=2, column=1, sticky='EW')
-        self.height_label = Label(self, text='Enter the spell height/radius (ft')
-        self.height_label.grid(row=3, column=0, sticky='EW')
+        self.height_label = Label(self, text='Spell height/radius (ft)')
+        self.height_label.grid(row=3, column=0, sticky='EW', ipadx = 5)
         self.entry_height = Entry(self, textvariable=height_var)
         self.entry_height.grid(row=3, column=1, sticky='EW')
 
@@ -90,12 +91,18 @@ class Spawner(Frame):
         original_hero_image_dir = "player_models\\original\\"
         base_hero_sprites_dir = "player_models\\base_sprites\\"
         chosen_hero = hero_var.get()
-        base_sprite_path = os.path.join(base_hero_sprites_dir, chosen_hero + "_resized.png")
-        original_image_path = os.path.join(original_hero_image_dir, chosen_hero+"_original.png")
+        base_sprite_file = chosen_hero + "_resized.png"
+        base_sprite_path = base_hero_sprites_dir + base_sprite_file
+        original_image_path = os.path.join(original_hero_image_dir, (chosen_hero + "_original.png"))
+        if base_sprite_file not in os.listdir(base_hero_sprites_dir):
+            original_image_path = os.path.join(original_hero_image_dir,(chosen_hero + "_original.png"))
+            image = Image.open(original_image_path)
+            base_sprite = image.resize((HERO_WIDTH, HERO_HEIGHT), Image.ANTIALIAS)
+            base_sprite.save(base_sprite_path, "png")
         if chosen_hero in main_heroes:
             image = Image.open(base_sprite_path)
             d = ImageDraw.Draw(image)
-            d.rectangle([(0,5),(45,55)], width=2)
+            d.rectangle([(0,5),(HERO_WIDTH,HERO_HEIGHT)], width=2)
             dup_hero_image_path = os.path.join(base_hero_sprites_dir, (chosen_hero + '_duplicate_resized.png'))
             image.save(dup_hero_image_path, "png")
             heroes.append(PhotoImage(file=dup_hero_image_path))
@@ -142,11 +149,11 @@ class Spawner(Frame):
         except ValueError:
             print("Wrong Input")
             if chosen_shape == 'Rectangle':
-                shape_width, shape_height = 5, 10
+                shape_width, shape_height = 5, 100
             elif chosen_shape == 'Oval':
                 shape_width, shape_height = 20, 20
-        pixel_width = (int)(shape_width/5)*45
-        pixel_height = (int)(shape_height/5)*45
+        pixel_width = (int)(shape_width/5)*BLOCK_SIZE
+        pixel_height = (int)(shape_height/5)*BLOCK_SIZE
 
         print(shape_width)
         print(shape_height)
@@ -184,11 +191,11 @@ def main():
         w = battle_map.winfo_width()  # Get current width of canvas
         h = battle_map.winfo_height()  # Get current height of canvas
         battle_map.delete('grid_line')  # Will only remove the grid_line
-        for i in range(0, w, 45):
+        for i in range(0, w, BLOCK_SIZE):
             battle_map.create_line([(i, 0), (i, h)], tag='grid_line')
 
         # Creates all horizontal lines at intevals of 100
-        for i in range(0, h, 45):
+        for i in range(0, h, BLOCK_SIZE):
             battle_map.create_line([(0, i), (w, i)], tag='grid_line')
     battle_map.bind('<Configure>', create_grid)
 
@@ -375,6 +382,12 @@ def main():
             newxy.append(v.imag)
         battle_map.coords(rot_data['id'], *newxy)
 
+    def clean_files():
+        base_sprite_dir = "player_models\\base_sprites\\"
+        for file in os.listdir(base_sprite_dir):
+            file_path = os.path.join(base_sprite_dir, file)
+            os.remove(file_path)
+
     movable_tags = ['character', 'rectangle', 'circle']
     for tag in movable_tags:
         battle_map.tag_bind(tag, "<ButtonPress-1>", drag_start)
@@ -396,6 +409,10 @@ def main():
     root.bind('<Down>', shrink)
 
     root.mainloop()
+
+    clean_files()
+
+
 
 if __name__ == '__main__':
     main()
