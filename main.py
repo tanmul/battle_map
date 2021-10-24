@@ -9,8 +9,8 @@ import json
 
 # GLOBAL CONSTANTS
 # Need to be set
-WIDTH, HEIGHT = 1260, 720
-BLOCK_SIZE = 30
+WIDTH, HEIGHT = 2560, 1440
+BLOCK_SIZE = 45
 SIZES = {'Tiny': 0.5, 'Small': 1, 'Medium': 1, 'Large': 2, 'Huge': 3, 'Gargantuan': 4}
 background_color = 'gray13'
 
@@ -40,7 +40,7 @@ class Menu(Frame):
         self.config(bg=background_color, width=frame_width, height=frame_height)
         self.pack_propagate(False)
         self.grid_propagate(False)
-        self.columnconfigure((0, 1, 2, 3, 4, 5, 6, 7, 8), weight=1)
+        self.columnconfigure((0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), weight=1)
         self.rowconfigure((0, 1, 2, 3, 4, 5), weight=1, uniform='row')
 
         self.battlemap_bg_label = ttk.Label(self, text='Find a picture to use for the battlemap:', background=background_color)
@@ -105,10 +105,11 @@ class Menu(Frame):
         self.player_label = ttk.Label(self, text='Character', anchor = 'center', borderwidth = 2, background=background_color)
         self.flying_label = ttk.Label(self, text='Current Height', anchor='center', borderwidth=2, background=background_color)
         self.health_label = ttk.Label(self, text='Current Health', anchor = 'center', borderwidth = 2, background=background_color)
-        self.class_label = ttk.Label(self, text='Class', anchor = 'center', borderwidth = 2, background=background_color)
+        self.ac_label = ttk.Label(self, text='AC', anchor = 'center', borderwidth = 2, background=background_color)
         self.player_label.grid(row=0, column=5, sticky='EW')
         self.flying_label.grid(row=0, column=6, sticky='EW')
         self.health_label.grid(row=0, column=7, sticky='EW')
+        self.ac_label.grid(row=0, column=8, sticky='EW')
 
         row_count = 1
         for hero in players:
@@ -124,8 +125,10 @@ class Menu(Frame):
             self.char_label.grid(row=row_count, column=5)
             self.flying_entry = ttk.Entry(self)
             self.health_entry = ttk.Entry(self)
+            self.ac_entry = ttk.Entry(self)
             self.flying_entry.grid(row=row_count, column=6, sticky='NSEW')
             self.health_entry.grid(row=row_count, column=7, sticky='NSEW')
+            self.ac_entry.grid(row=row_count, column=8, sticky='NSEW')
             row_count += 1
 
 
@@ -436,21 +439,21 @@ def main():
             newxy.append(v.imag)
         battle_map.coords(rot_data['id'], *newxy)
 
-    def clean_files():
-        game_log_path = 'game_log.json'
-        try:
-            os.remove(game_log_path)
-        except FileNotFoundError:
-            print('File not found')
-        with open(game_log_path, 'w') as f:
-            json.dump(hero_data, f)
-            json.dump(duplicate_hero_data, f)
-            json.dump(enemy_data, f)
-        dirs_to_be_cleaned = ["player_models\\base_sprites\\", "player_models\\temp_resized_sprites"]
-        for dir in dirs_to_be_cleaned:
-            for file in os.listdir(dir):
-                file_path = os.path.join(dir, file)
-                os.remove(file_path)
+    # def clean_files():
+    #     game_log_path = 'game_log.json'
+    #     try:
+    #         os.remove(game_log_path)
+    #     except FileNotFoundError:
+    #         print('File not found')
+    #     with open(game_log_path, 'w') as f:
+    #         json.dump(hero_data, f)
+    #         json.dump(duplicate_hero_data, f)
+    #         json.dump(enemy_data, f)
+    #     dirs_to_be_cleaned = ["player_models\\base_sprites\\", "player_models\\temp_resized_sprites"]
+    #     for dir in dirs_to_be_cleaned:
+    #         for file in os.listdir(dir):
+    #             file_path = os.path.join(dir, file)
+    #             os.remove(file_path)
 
     movable_tags = ['character', 'rectangle', 'circle', 'triangle']
     for tag in movable_tags:
@@ -474,7 +477,7 @@ def main():
 
     root.mainloop()
 
-    clean_files()
+    # clean_files()
 
 
 
