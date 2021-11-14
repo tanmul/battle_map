@@ -12,6 +12,7 @@ import json
 WIDTH, HEIGHT = 2560, 1440
 BLOCK_SIZE = 45
 SIZES = {'Tiny': 0.5, 'Small': 1, 'Medium': 1, 'Large': 2, 'Huge': 3, 'Gargantuan': 4}
+COLORS = {'NPC' : 'gray', 'Enemy' : 'red', 'Pet/Familiar' : 'blue', 'Ally' : 'green'}
 background_color = 'gray13'
 
 # Calculated automatically
@@ -48,13 +49,6 @@ class Menu(Frame):
         self.battlemap_bg_button = ttk.Button(self, text='Browse', command=lambda: choose_bm_bg(self, canvas))
         self.battlemap_bg_button.grid(row=0, column=2, sticky='EW')
 
-        # resolutions = ['1280 by 720', '1920 by 1080', '2560 by 1440']
-        # screen_resolution = StringVar(self)
-        # self.battlemap_application_size = ttk.Label(self, text = 'Choose a resolution?', background = background_color)
-        # self.battlemap_application_size.grid(row=1, column=1, sticky='EW', columnspan = 2)
-        # self.battemap_resolution = ttk.OptionMenu(self, screen_resolution, resolutions[0], *resolutions, command=)
-        # self.battemap_resolution.grid(row=1, column=2, sticky='EW')
-
         players = ['Swig', 'Hardin', 'Silene', 'Bones']
         hero_var = StringVar(self)
         self.hero_chooser = ttk.OptionMenu(self, hero_var, players[0], *players)
@@ -66,7 +60,11 @@ class Menu(Frame):
         self.size_options = list(SIZES.keys())
         self.size_var = StringVar(self)
         self.enemy_size_choice = ttk.OptionMenu(self, self.size_var, self.size_options[2], *self.size_options)
-        self.enemy_size_choice.grid(row=1, column=3, sticky='EW')
+        self.enemy_size_choice.grid(row=1, column=3, sticky='NEW')
+        color_options = list(COLORS.keys())
+        color_var = StringVar(self)
+        self.npc_color_choice = ttk.OptionMenu(self, color_var, color_options[1], *color_options)
+        self.npc_color_choice.grid(row=1, column=3, sticky='SWE')
 
         self.enemy_spawner = ttk.Button(self, text='Spawn Enemy',
                                         command=lambda: spawn_enemy(self,canvas, self.size_var.get()))
@@ -103,11 +101,11 @@ class Menu(Frame):
         self.paint_button_2.grid(row=5, column=4, sticky='NSEW')
 
         self.player_label = ttk.Label(self, text='Character', anchor = 'center', borderwidth = 2, background=background_color)
-        self.flying_label = ttk.Label(self, text='Current Height', anchor='center', borderwidth=2, background=background_color)
+        self.initiative_label = ttk.Label(self, text='Initiative', anchor='center', borderwidth=2, background=background_color)
         self.health_label = ttk.Label(self, text='Current Health', anchor = 'center', borderwidth = 2, background=background_color)
         self.ac_label = ttk.Label(self, text='AC', anchor = 'center', borderwidth = 2, background=background_color)
         self.player_label.grid(row=0, column=5, sticky='EW')
-        self.flying_label.grid(row=0, column=6, sticky='EW')
+        self.initiative_label.grid(row=0, column=6, sticky='EW')
         self.health_label.grid(row=0, column=7, sticky='EW')
         self.ac_label.grid(row=0, column=8, sticky='EW')
 
@@ -123,14 +121,13 @@ class Menu(Frame):
             self.char_label.image = final_im
             self.char_label.config(image=final_im, background=background_color)
             self.char_label.grid(row=row_count, column=5)
-            self.flying_entry = ttk.Entry(self)
+            self.initiative_entry = ttk.Entry(self)
             self.health_entry = ttk.Entry(self)
             self.ac_entry = ttk.Entry(self)
-            self.flying_entry.grid(row=row_count, column=6, sticky='NSEW')
+            self.initiative_entry.grid(row=row_count, column=6, sticky='NSEW')
             self.health_entry.grid(row=row_count, column=7, sticky='NSEW')
             self.ac_entry.grid(row=row_count, column=8, sticky='NSEW')
             row_count += 1
-
 
         def choose_bm_bg(self, canvas):
             global battlemap_bg
@@ -199,15 +196,17 @@ class Menu(Frame):
                 main_heroes.append(chosen_hero)
                 hero_data.update(data_dict)
             else:
+                global duplicate_hero_data
                 duplicate_hero_data.update(data_dict)
 
         def spawn_enemy(self, canvas, size_var):
             enemy_object_id = canvas.create_oval(canvas_center[0], canvas_center[1], canvas_center[0] + (BLOCK_SIZE * SIZES[size_var]),
-                                          canvas_center[1] + (BLOCK_SIZE * SIZES[size_var]), outline='black', fill='red',
+                                          canvas_center[1] + (BLOCK_SIZE * SIZES[size_var]), outline='black', fill= COLORS[color_var.get()],
                                           tags=("character",))
             enemy_data_dict = {enemy_object_id:
                {
-                    'enemy_size': size_var,
+                    'type' : color_var.get(),
+                    'npc_size': size_var,
                     'is_duplicate': False
                }
             }
@@ -256,7 +255,7 @@ class Menu(Frame):
                 x1, y1 = ((int)((x2+x0)/2), canvas_center[1] - pixel_height)
                 xy = [(x0, y0), (x1, y1), (x2, y2)]
                 tri_poly = canvas.create_polygon(xy, fill = '', outline = 'green', width = 4, tags = ("triangle"))
-                center = [x1, (int)((y1 + y0)/2)]
+                center = [(int)((x0+x1+x2)/3), (int)((y2 + y1 + y0)/3)]
                 rot_data['id'] = tri_poly
                 rot_data['xy'] = xy
                 rot_data['center'] = center
@@ -273,17 +272,16 @@ def main():
     menu = Menu(root, battle_map)
     menu.place(x=0, y=(int)(3*HEIGHT/4))
 
-
     def create_grid(event):
         w = canvas_WIDTH  # Get current width of canvas
         h = canvas_HEIGHT  # Get current height of canvas
         battle_map.delete('grid_line')  # Will only remove the grid_line
         for i in range(0, w, BLOCK_SIZE):
-            battle_map.create_line([(i, 0), (i, h)], tag='grid_line')
+            battle_map.create_line([(i, 0), (i, h)], tag='grid_line', width = 2)
 
         # Creates all horizontal lines at intevals of 100
         for i in range(0, h, BLOCK_SIZE):
-            battle_map.create_line([(0, i), (w, i)], tag='grid_line')
+            battle_map.create_line([(0, i), (w, i)], tag='grid_line', width = 2)
     battle_map.bind('<Configure>', create_grid)
 
     def calculate_newxy_center(objectid):
@@ -295,7 +293,7 @@ def main():
             coord_tuple = (coords[i-1], coords[i])
             coord_tuples.append(coord_tuple)
         if 'triangle' in tags:
-            new_center = [(int)(coords[2]), (int)((coords[3] + coords[1]) / 2)]
+            new_center = [(int)((coords[0] + coords[2] + coords[4]))/3, (int)((coords[3] + coords[1] + coords[5]) / 3)]
         else:
             new_center = [(int)((coords[4] + coords[0]) / 2), (int)((coords[5] + coords[1]) / 2)]
         rot_data['xy'] = coord_tuples
@@ -377,41 +375,6 @@ def main():
         hero = battle_map.create_image(x, y, image=battle_map_hero, tags=("character", "resizable",))
         ids.append(hero)
         return hero
-
-    def enlarge_shrink(event, enlarge):
-        global hero_data, duplicate_hero_data, last_resized
-        closest_object = battle_map.find_withtag('resizable')[-1]
-        is_dup = False
-        data_dict = hero_data
-        if closest_object in duplicate_hero_data:
-            data_dict = duplicate_hero_data
-            is_dup = True
-        current_char = data_dict[closest_object]['hero_name']
-        hero_path = data_dict[closest_object]['hero_path']
-        image_width = data_dict[closest_object]['current_width']
-        image_height = data_dict[closest_object]['current_height']
-
-        if enlarge:
-            print(f"Making object {closest_object} bigger.")
-            new_width = image_width*2
-            new_height = image_height*2
-        else:
-            print(f"Making object {closest_object} smaller.")
-            new_width = (int)(image_width / 2)
-            new_height = (int)(image_height / 2)
-
-        if closest_object in ids:
-            battle_map.delete(closest_object)
-            ids.remove(closest_object)
-            new_hero_object_id = resize_image(hero_path, current_char, new_width, new_height, event.x, event.y)
-            data_dict[new_hero_object_id] = data_dict.pop(closest_object)
-            data_dict[new_hero_object_id]['current_width'] = new_width
-            data_dict[new_hero_object_id]['current_height'] = new_height
-            if is_dup:
-                duplicate_hero_data = data_dict
-            else:
-                hero_data = data_dict
-            last_resized = new_hero_object_id
 
     def getangle(event):
         dx = battle_map.canvasx(event.x) - rot_data['center'][0]
